@@ -37,7 +37,6 @@ end
 
 function Prompt:setPrompt()
     self.prompt = Citizen.InvokeNative(0x04F97DE45A519419)
-    print(self.prompt)
 end
 
 function Prompt:removePrompt()
@@ -60,6 +59,14 @@ function Prompt:setActiveState(state)
     self.active = state
 end
 
+function Prompt:InitEvent()
+    if self.options?.type == 'client' then
+        TriggerEvent(self.options.event, self.options.args ~= nil and table.unpack(self.options.args) or nil)
+    elseif self.options?.type == 'server' then
+        TriggerServerEvent(self.options.event, self.options.args ~= nil and table.unpack(self.options.args) or nil)
+    end
+end
+
 function createPrompt(name)
     local currentPrompt = Prompts(name)
     if currentPrompt then
@@ -76,11 +83,6 @@ function createPrompt(name)
 end
 
 CreateThread(function()
-    local prompt = Prompt.new('test', vector3(-339.7, 789.59, 116.04), 0xCEFD9220, 'Test', {
-        type = 'client',
-        event = 'test',
-        args = { false, true, true }
-    })
     while true do
         local sleep = 1000
         local ped = PlayerPedId()
@@ -99,6 +101,13 @@ CreateThread(function()
                         Citizen.InvokeNative(0x71215ACCFDE075EE, currentPrompt:getPrompt(), true)
                         currentPrompt:setActiveState(true)
                     end
+                    if (Citizen.InvokeNative(0xE0F65F0640EF0617, currentPrompt:getPrompt())) then
+                        currentPrompt:initEvent()
+                        Citizen.InvokeNative(0x8A0FB4D03A630D21, currentPrompt:getPrompt(), false)
+                        Citizen.InvokeNative(0x71215ACCFDE075EE, currentPrompt:getPrompt(), false)
+                        currentPrompt:removePrompt()
+                        currentPrompt:setActiveState(false)
+                    end
                 else
                     if (currentPrompt:getActiveState()) then
                         Citizen.InvokeNative(0x8A0FB4D03A630D21, currentPrompt:getPrompt(), false)
@@ -113,7 +122,8 @@ CreateThread(function()
     end
 end)
 
-AddEventHandler('onResourceStop', function()
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
     for k, v in pairs(Prompts) do
         local currentPrompt = Prompts(k)
         Citizen.InvokeNative(0x8A0FB4D03A630D21, currentPrompt:getPrompt(), false)
@@ -121,3 +131,6 @@ AddEventHandler('onResourceStop', function()
         currentPrompt:removePrompt()
     end
 end)
+
+
+exports('createNewPrompt', Prompt.new)
