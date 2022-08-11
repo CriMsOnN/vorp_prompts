@@ -59,7 +59,7 @@ function Prompt:setActiveState(state)
     self.active = state
 end
 
-function Prompt:InitEvent()
+function Prompt:emit()
     if self.options?.type == 'client' then
         TriggerEvent(self.options.event, self.options.args ~= nil and table.unpack(self.options.args) or nil)
     elseif self.options?.type == 'server' then
@@ -102,7 +102,7 @@ CreateThread(function()
                         currentPrompt:setActiveState(true)
                     end
                     if (Citizen.InvokeNative(0xE0F65F0640EF0617, currentPrompt:getPrompt())) then
-                        currentPrompt:initEvent()
+                        currentPrompt:emit()
                         Citizen.InvokeNative(0x8A0FB4D03A630D21, currentPrompt:getPrompt(), false)
                         Citizen.InvokeNative(0x71215ACCFDE075EE, currentPrompt:getPrompt(), false)
                         currentPrompt:removePrompt()
